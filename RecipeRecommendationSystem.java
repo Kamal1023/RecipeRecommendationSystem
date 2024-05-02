@@ -11,7 +11,6 @@ public class RecipeRecommendationSystem extends JFrame {
     private JComboBox<String> foodItemsComboBox;
     private JButton recommendButton;
     private JButton searchButton;
-    private JButton generateInstructionsButton;
 
     public RecipeRecommendationSystem() {
         super("Recipe Recommendation System");
@@ -20,34 +19,41 @@ public class RecipeRecommendationSystem extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        JPanel controlPanel = new JPanel(new BorderLayout());
+        // Create control panel
+        JPanel controlPanel = new JPanel(new GridLayout(2, 2, 10, 10));
         controlPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
+        // Add components to the control panel
         foodItemsComboBox = new JComboBox<>();
-        controlPanel.add(foodItemsComboBox, BorderLayout.CENTER);
+        controlPanel.add(new JLabel("Select Ingredient:"));
+        controlPanel.add(foodItemsComboBox);
 
         recommendButton = new JButton("Recommend Recipes");
-        controlPanel.add(recommendButton, BorderLayout.EAST);
+        controlPanel.add(recommendButton);
 
-        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
         searchButton = new JButton("Search by Ingredients");
-        generateInstructionsButton = new JButton("Generate Recipe Instructions");
-        buttonPanel.add(searchButton);
-        buttonPanel.add(generateInstructionsButton);
+        controlPanel.add(searchButton);
 
-        controlPanel.add(buttonPanel, BorderLayout.SOUTH);
-
+        // Add control panel to the top of the frame
         add(controlPanel, BorderLayout.NORTH);
+
+        // Create panel for recipe text area
+        JPanel recipePanel = new JPanel(new BorderLayout());
+        recipePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         recipeTextArea = new JTextArea();
         recipeTextArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(recipeTextArea);
-        add(scrollPane, BorderLayout.CENTER);
+        recipePanel.add(scrollPane, BorderLayout.CENTER);
 
+        // Add recipe panel to the center of the frame
+        add(recipePanel, BorderLayout.CENTER);
+
+        // Initialize buttons and action listeners
         recommendButton.addActionListener(e -> recommendRecipes());
         searchButton.addActionListener(e -> searchRecipes());
-        generateInstructionsButton.addActionListener(e -> generateInstructions());
 
+        // Connect to the database and load food items
         try {
             connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/recipeRecDB", "root", "kamal2357");
             loadFoodItems();
@@ -143,26 +149,6 @@ public class RecipeRecommendationSystem extends JFrame {
         if (input != null && !input.isEmpty()) {
             String[] ingredients = input.split(",");
             recommendRecipes(ingredients);
-        }
-    }
-
-    private void generateInstructions() {
-        String selectedRecipe = JOptionPane.showInputDialog(this, "Enter the recipe name:");
-        if (selectedRecipe != null && !selectedRecipe.isEmpty()) {
-            try {
-                PreparedStatement preparedStatement = connection.prepareStatement("SELECT instructions FROM recipes WHERE recipe_name = ?");
-                preparedStatement.setString(1, selectedRecipe);
-                ResultSet resultSet = preparedStatement.executeQuery();
-
-                if (resultSet.next()) {
-                    recipeTextArea.setText(resultSet.getString("instructions"));
-                } else {
-                    recipeTextArea.setText("Instructions not found for the selected recipe.");
-                }
-            } catch (SQLException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Failed to retrieve instructions");
-            }
         }
     }
 
